@@ -1,142 +1,127 @@
-DROP MATERIALIZED VIEW SAKTIKSL.MV_ANGGARAN_AKUN_220930_221120;
-CREATE MATERIALIZED VIEW SAKTIKSL.MV_ANGGARAN_AKUN_220930_221120
-AS 
 WITH 
 LIST_DETAIL
 AS
-(	select	DISTINCT bel_kode_kementerian||'.'||bel_kode_unit||'.'||out_kode_program||'.'||out_kode_kegiatan||'.'||out_kode_output||'.'||subout_kode kode_detail,
-			bel_kode_satker,
+(	SELECT	DISTINCT BEL_KODE_KEMENTERIAN||'.'||BEL_KODE_UNIT||'.'||OUT_KODE_PROGRAM||'.'||OUT_KODE_KEGIATAN||'.'||OUT_KODE_OUTPUT||'.'||SUBOUT_KODE KODE_DETAIL,
+			BEL_KODE_SATKER,
 			AKUN_KODE_AKUN,
 			BEL_NOMOR_DIPA
-	FROM	saktiksl.mv_anggaran_base_table_220930_221120
+	FROM	SAKTIRKA.MV_ANGGARAN_BASE_TABLE_230930_231123
 ),
 LIST_SATKER AS
-(	select	distinct AA.kode								kdsatker,
-			AA.deskripsi									nmsatker,
-			substr(AA.kode_unit,1,3)						KDDEPT ,
-			BB.DESKRIPSI									NMDEPT,
-			substr(AA.kode_unit,1,3)||substr(kode_unit,-2)	KDBAES1 ,
-			CC.DESKRIPSI									NMBAES1
-	from	saktiksl.BPK_ADM_R_SATKER_220731	aa
-	LEFT JOIN
-		(	SELECT	DISTINCT *
-			FROM	saktiksl.BPK_ADM_R_KEMENTERIAN_220731
-			WHERE	LEVEL_ = '1'
-		) BB
-			ON	substr(AA.kode_unit,1,3) = BB.KODE
-	LEFT JOIN
-		(	SELECT	DISTINCT *
-			FROM	saktiksl.BPK_ADM_R_KEMENTERIAN_220731
-			WHERE	LEVEL_ = '2'
-		) CC
-			ON	AA.kode_unit = cc.kode
+(	SELECT	KODE_SATKER     kdsatker,
+           	NAMA_SATKER     nmsatker,
+            BA              KDDEPT,
+            NM_BA           NMDEPT,
+            BAES1           KDBAES1,
+            NM_ES1          NMBAES1
+           FROM SAKTIKSL.MV_MASTER_SATKER_2023_231120
 ),
 DIPA_AWAL AS
-(	--coding DIPA Awal
-	--Perlu distinct target suboutput per kode RO
-	--dan distinct nilai DIPA per kode RO + per kode lokasi
-	SELECT	AA.kode_detail,
-			AA.bel_kode_satker,
+(	--CODING DIPA AWAL
+	--PERLU DISTINCT TARGET SUBOUTPUT PER KODE RO
+	--DAN DISTINCT NILAI DIPA PER KODE RO + PER KODE LOKASI
+	SELECT	AA.KODE_DETAIL,
+			AA.BEL_KODE_SATKER,
 			AA.BEL_NOMOR_DIPA,
-			AA.bel_revisi_ke,
-			aa.AKUN_KODE_AKUN,
-			AA.subout_total nilai_awal
-	from	
-	(	SELECT	kode_detail,
-				bel_kode_satker,
+			AA.BEL_REVISI_KE,
+			AA.AKUN_KODE_AKUN,
+			AA.SUBOUT_TOTAL NILAI_AWAL
+	FROM	
+	(	SELECT	KODE_DETAIL,
+				BEL_KODE_SATKER,
 				BEL_NOMOR_DIPA,
-				bel_revisi_ke,
+				BEL_REVISI_KE,
 				AKUN_KODE_AKUN,
-				sum(item_total) subout_total
-		from
-		(	select	bel_kode_kementerian||'.'||bel_kode_unit||'.'||out_kode_program||'.'||out_kode_kegiatan||'.'||out_kode_output||'.'||subout_kode kode_detail,
-					bel_kode_satker,
+				SUM(ITEM_TOTAL) SUBOUT_TOTAL
+		FROM
+		(	SELECT	BEL_KODE_KEMENTERIAN||'.'||BEL_KODE_UNIT||'.'||OUT_KODE_PROGRAM||'.'||OUT_KODE_KEGIATAN||'.'||OUT_KODE_OUTPUT||'.'||SUBOUT_KODE KODE_DETAIL,
+					BEL_KODE_SATKER,
 					BEL_NOMOR_DIPA,
-					bel_revisi_ke,
+					BEL_REVISI_KE,
 					SUBOUT_KODE_PROPINSI,
 					SUBOUT_KODE_KOTA,
 					SUBOUT_KODE_PROPINSI||SUBOUT_KODE_KOTA SUBOUT_KODE_LOKASI,
 					AKUN_KODE_AKUN,
 					ITEM_TOTAL 
-			from	saktiksl.mv_anggaran_base_table_220930_221120
+			FROM	SAKTIRKA.MV_ANGGARAN_BASE_TABLE_230930_231123
 			WHERE	BEL_JENIS_REVISI  = 'DIPA_AWAL'
 		)
-		GROUP BY	kode_detail,
-					bel_kode_satker,
+		GROUP BY	KODE_DETAIL,
+					BEL_KODE_SATKER,
 					BEL_NOMOR_DIPA,
-					bel_revisi_ke,
+					BEL_REVISI_KE,
 					AKUN_KODE_AKUN
 	) AA
 ),
 DIPA_REVISI AS
-(	--Coding DIPA Revisi
-	--Perlu distinct target suboutput per kode RO
-	--dan distinct nilai DIPA per kode RO + per kode lokasi
-	SELECT	AA.kode_detail,
-			AA.bel_kode_satker,
+(	--CODING DIPA REVISI
+	--PERLU DISTINCT TARGET SUBOUTPUT PER KODE RO
+	--DAN DISTINCT NILAI DIPA PER KODE RO + PER KODE LOKASI
+	SELECT	AA.KODE_DETAIL,
+			AA.BEL_KODE_SATKER,
 			AA.BEL_NOMOR_DIPA,
-			AA.bel_revisi_ke,
-			aa.AKUN_KODE_AKUN,
-			AA.subout_total nilai_revisi
-	from	
-	(	SELECT	kode_detail,
-				bel_kode_satker,
+			AA.BEL_REVISI_KE,
+			AA.AKUN_KODE_AKUN,
+			AA.SUBOUT_TOTAL NILAI_REVISI
+	FROM	
+	(	SELECT	KODE_DETAIL,
+				BEL_KODE_SATKER,
 				BEL_NOMOR_DIPA,
-				bel_revisi_ke,
+				BEL_REVISI_KE,
 				AKUN_KODE_AKUN,
-				sum(item_total) subout_total
-		from
-		(	select	bel_kode_kementerian||'.'||bel_kode_unit||'.'||out_kode_program||'.'||out_kode_kegiatan||'.'||out_kode_output||'.'||subout_kode kode_detail,
-					bel_kode_satker,
+				SUM(ITEM_TOTAL) SUBOUT_TOTAL
+		FROM
+		(	SELECT	BEL_KODE_KEMENTERIAN||'.'||BEL_KODE_UNIT||'.'||OUT_KODE_PROGRAM||'.'||OUT_KODE_KEGIATAN||'.'||OUT_KODE_OUTPUT||'.'||SUBOUT_KODE KODE_DETAIL,
+					BEL_KODE_SATKER,
 					BEL_NOMOR_DIPA,
-					bel_revisi_ke,
+					BEL_REVISI_KE,
 					SUBOUT_KODE_PROPINSI,
 					SUBOUT_KODE_KOTA,
 					SUBOUT_KODE_PROPINSI||SUBOUT_KODE_KOTA SUBOUT_KODE_LOKASI,
 					AKUN_KODE_AKUN,
-					item_total
-			from	saktiksl.mv_anggaran_base_table_220930_221120
+					ITEM_TOTAL
+			FROM	SAKTIRKA.MV_ANGGARAN_BASE_TABLE_230930_231123
 			WHERE	BEL_JENIS_REVISI  = 'DIPA_REVISI'
 		)
-		GROUP BY	kode_detail,
-					bel_kode_satker,
+		GROUP BY	KODE_DETAIL,
+					BEL_KODE_SATKER,
 					BEL_NOMOR_DIPA,
-					bel_revisi_ke,
+					BEL_REVISI_KE,
 					AKUN_KODE_AKUN
 	) AA
 ),
 MAX_REV_KE AS
-(	select	bel_nomor_dipa,
-			max(bel_revisi_ke) bel_revisi_ke
-	from	saktiksl.mv_anggaran_base_table_220930_221120
-	group by	bel_nomor_dipa
+(	SELECT	BEL_NOMOR_DIPA,
+			MAX(BEL_REVISI_KE) BEL_REVISI_KE
+	FROM	SAKTIRKA.MV_ANGGARAN_BASE_TABLE_230930_231123
+	GROUP BY	BEL_NOMOR_DIPA
 )
-select	AA1.kode_detail, 
+SELECT	AA1.KODE_DETAIL, 
 		CC1.KDDEPT ,
 		CC1.NMDEPT ,
 		CC1.KDBAES1 ,
 		CC1.NMBAES1 ,
-		AA1.bel_kode_satker kode_satker,
-		CC1.nmsatker,
+		AA1.BEL_KODE_SATKER KODE_SATKER,
+		CC1.NMSATKER,
 		AA1.BEL_NOMOR_DIPA,
-		aa1.akun_kode_akun,
-		DD1.bel_revisi_ke,
-		NVL(EE1.nilai_awal,0) nilai_awal,
-		CASE	WHEN DD1.bel_revisi_ke = 0 THEN NVL(EE1.nilai_awal,0)
-				ELSE NVL(FF1.nilai_revisi,0) 
-		END AS nilai_revisi
+		AA1.AKUN_KODE_AKUN,
+		DD1.BEL_REVISI_KE,
+		NVL(EE1.NILAI_AWAL,0) NILAI_AWAL,
+		CASE	WHEN DD1.BEL_REVISI_KE = 0 THEN NVL(EE1.NILAI_AWAL,0)
+				ELSE NVL(FF1.NILAI_REVISI,0) 
+		END AS NILAI_REVISI
 FROM	LIST_DETAIL AA1
 LEFT JOIN	LIST_SATKER CC1
-	ON	AA1.bel_kode_satker = CC1.kdsatker
+	ON	AA1.BEL_KODE_SATKER = CC1.KDSATKER
 LEFT JOIN	MAX_REV_KE DD1
 	ON	AA1.BEL_NOMOR_DIPA = DD1.BEL_NOMOR_DIPA
 LEFT JOIN	DIPA_AWAL EE1
-	ON	AA1.kode_detail = EE1.kode_detail
+	ON	AA1.KODE_DETAIL = EE1.KODE_DETAIL
 		AND AA1.BEL_KODE_SATKER = EE1.BEL_KODE_SATKER
 		AND AA1.BEL_NOMOR_DIPA = EE1.BEL_NOMOR_DIPA
-		AND aa1.akun_kode_akun = ee1.akun_kode_akun
+		AND AA1.AKUN_KODE_AKUN = EE1.AKUN_KODE_AKUN
 LEFT JOIN	DIPA_REVISI FF1
-	ON	AA1.kode_detail = FF1.kode_detail
+	ON	AA1.KODE_DETAIL = FF1.KODE_DETAIL
 		AND AA1.BEL_KODE_SATKER = FF1.BEL_KODE_SATKER
 		AND AA1.BEL_NOMOR_DIPA = FF1.BEL_NOMOR_DIPA
-		AND aa1.akun_kode_akun = ff1.akun_kode_akun;
+		AND AA1.AKUN_KODE_AKUN = FF1.AKUN_KODE_AKUN;
